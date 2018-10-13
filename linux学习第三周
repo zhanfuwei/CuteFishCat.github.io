@@ -1,0 +1,293 @@
+## Linux学习第三周
+
+
+
+
+     参数替换xargs
+由于很多命令不支持管道|来传递参数，而日常工作中有这个必要，所以就有了
+xargs命令（可以把前面命令的标准输出通过管道 | 传输给后面命令，作为后面命令的参数）  
+xargs用于产生某个命令的参数，xargs 可以读入 stdin 的数据，并且以空格符
+或回车符将 stdin 的数据分隔成为arguments  
+注意：文件名或者是其他意义的名词内含有空格符的情况  
+有些命令不能接受过多参数，命令执行可能会失败，xargs可以解决  
+示例：  
+ &ensp; &ensp;ls f* |xargs rm   
+ &ensp; &ensp;find /sbin -perm +700 |ls -l 这个命令是错误的  
+ &ensp; &ensp;find /sbin -perm +7000 | xargs ls –l 查找特殊权限的文件  
+find和xargs格式：find | xargs COMMAND  
+
+ find示例  
+备份配置文件，添加.orig这个扩展名  
+ &ensp; &ensp;find -name “*.conf” -exec cp {} {}.orig \;  
+提示删除存在时间超过３天以上的joe的临时文件  
+ &ensp; &ensp;find /tmp -ctime +3 -user joe -ok rm {} \;  
+在主目录中寻找可被其它用户写入的文件  
+ &ensp; &ensp;find ~ -perm -002 -exec chmod o-w {} \;  
+查找/data下的权限为644，后缀为sh的普通文件，增加执行权限  
+ &ensp; &ensp;find /data –type f -perm 644 -name “*.sh” –exec chmod 755 {} \;  
+查看/home的目录  
+ &ensp; &ensp;find /home –type d -ls  
+
+ 压缩、解压缩及归档工具（打包压缩可能会丢失一些属性）  
+ &ensp; &ensp;file-roller（只用于图形界面，不常用）  
+ &ensp; &ensp;compress/uncompress: .Z  
+ &ensp; &ensp;gzip/gunzip: .gz  
+ &ensp; &ensp;bzip2/bunzip2: .bz2  
+ &ensp; &ensp;xz/unxz: .xz  
+ &ensp; &ensp;zip/unzip  
+ &ensp; &ensp;tar  
+ &ensp; &ensp; cpio  
+
+ compress/uncompress    
+   &ensp; &ensp;格式： compress后直接跟文件名。 原文件默认直接删除  
+   压缩文件后缀  .z  
+compress [-dfvcVr] [-b maxbits] [file ...]  
+ &ensp; &ensp;-d: 解压缩，相当于uncompress  
+ &ensp; &ensp;-c: 结果输出至标准输出,不删除原文件   
+ &ensp; &ensp;-v: 显示详情  
+uncompress 解压缩  
+ zcat file.Z >file  
+
+ gzip/gunzip（可以同时压缩多个文件）  
+   &ensp; &ensp; 压缩带 - 的文件前面加上 -- 即可  
+    &ensp; &ensp; 原文件默认直接删除  
+gzip [OPTION]... FILE ...  
+ &ensp;-d：解压缩，相当于gunzip  
+ &ensp;-c：结果输出至标准输出，保留原文件不改变  
+ &ensp;-#：1-9，指定压缩比，值越大压缩比越大  
+zcat：不显式解压缩的前提下查看文本文件内容（只把文件内容显示在屏幕上，并不做解压处理）  
+示例：  
+ &ensp; &ensp;gzip -c messages >messages.gz  
+ &ensp; &ensp;gzip -c -d messages.gz > messages  
+ &ensp; &ensp;zcat messages.gz > messages  
+ &ensp; &ensp;cat messages | gzip > m.gz（把命令的标准输出传输压缩成一个新文件）  
+
+ bzip2/bunzip2/bzcat
+   原文件默认直接删除  
+bzip2 [OPTION]... FILE ...  
+-k：keep, 保留原文件  
+-d：解压缩  
+-#：1-9，压缩比，默认为9  
+bzcat：不显式解压缩的前提下查看文本文件内容  
+ 
+ xz/unxz/xzcat  
+xz [OPTION]... FILE 
+-d：解压缩  
+-#：1-9，压缩比，默认为6  
+unxz file.xz 解压缩  
+xzcat: 不显式解压缩的前提下查看文本文件内容  
+
+ zip/unzip（可以对文件夹进行操作）  
+打包压缩  
+ &ensp; &ensp;zip –r /backup/sysconfig /etc/sysconfig/  
+解包解压缩  
+ &ensp; &ensp;unzip sysconfig.zip  
+ &ensp; &ensp;cat /var/log/messages | zip messages -  
+ &ensp; &ensp;unzip -p message > message  
+
+ tar工具（常用的打包工具）  
+tar（Tape ARchive，磁带归档的缩写）  
+tar [OPTION]...  
+(1) 创建归档  
+ &ensp; &ensp;tar -cpvf /PATH/FILE.tar FILE...  
+(2) 追加文件至归档： 注：不支持对压缩文件追加  
+ &ensp; &ensp;tar -r -f /PATH/FILE.tar FILE...  
+(3) 查看归档文件中的文件列表  
+ &ensp; &ensp;tar -t -f /PATH/FILE.tar  
+(4) 展开归档  
+ &ensp; &ensp;tar -x -f /PATH/FILE.tar  
+ &ensp; &ensp;tar -x -f /PATH/FILE.tar -C /PATH/  
+(5) 结合压缩工具实现：归档并压缩  
+ &ensp; &ensp;-j: bzip2, -z: gzip, -J: xz  
+
+ -exclude 排除文件（tgz=tar.gz）  
+ &ensp; &ensp;tar zcvf /root/a3.tgz --exclude=/app/host1 --exclude=/app/host2 /app  
+-T选项指定输入文件,-X选项指定包含要排除的文件列表  
+ &ensp; &ensp;tar zcvf mybackup.tgz -T /root/includefilelist -X /root/excludefilelist  
+
+splist:：分割一个文件为多个文件  
+分割大的 tar 文件为多份小文件  
+ &ensp; &ensp;split –b Size –d tar-file-name prefix-name  
+ &ensp; &ensp;split -b 1M –d mybackup.tgz mybackup-parts  
+ &ensp; &ensp;split -b 1M mybackup.tgz mybackup-parts  
+合并：  
+ &ensp; &ensp;cat mybackup-parts* > mybackup.tar.gz  
+
+ cpio（打包工具）  
+ 功能：复制文件从或到归档  
+ cpio命令是通过重定向的方式将文件进行打包备份，还原恢复的工具，它可以解压以
+“.cpio”或者“.tar”结尾的文件  
+ cpio [选项] > 文件名或者设备名  
+  cpio [选项] < 文件名或者设备名  
+ 选项  
+ &ensp; &ensp;-o 将文件拷贝打包成文件或者将文件输出到设备上  
+ &ensp; &ensp; -O filename 输出到指定的归档文件名  
+ &ensp; &ensp;-A 向已存在的归档文件中追加文件  
+ &ensp; &ensp;-i 解包，将打包文件解压或将设备上的备份还原到系统  
+ &ensp; &ensp;-I filename 对指定的归档文件名解压  
+ &ensp; &ensp;-t 预览，查看文件内容或者输出到设备上的文件内容  
+ &ensp; &ensp;-F filename 使用指定的文件名替代标准输入或输出  
+ &ensp; &ensp;-d 解包生成目录，在cpio还原时，自动的建立目录  
+ &ensp; &ensp; -v 显示打包过程中的文件名称  
+
+ 示例  
+将etc目录备份：  
+ &ensp; &ensp;find ./etc -print |cpio -ov >bak.cpio  
+将/data内容追加bak.cpio  
+ &ensp; &ensp; find /data | cpio -oA -F bak.cpio  
+内容预览  
+ &ensp; &ensp;cpio –tv < etc.cpio  
+解包文件  
+ &ensp; &ensp; cpio –idv < etc.cpio  
+
+ 处理文本的工具sed  
+Stream EDitor, 行编辑器  
+sed是一种流编辑器，它一次处理一行内容。处理时，把当前处理的行存储在临时
+缓冲区中，称为“模式空间”（pattern space），接着用sed命令处理缓冲区中的
+内容，处理完成后，把缓冲区的内容送往屏幕。然后读入下行，执行下一个循环。
+如果没有使诸如‘D’的特殊命令，那会在两个循环之间清空模式空间，但不会清
+空保留空间。这样不断重复，直到文件末尾。文件内容并没有改变，除非你使用重
+定向存储输出。  
+功能：主要用来自动编辑一个或多个文件,简化对文件的反复操作,编写转换程序等（可以批量编辑文件）  
+参考： http://www.gnu.org/software/sed/manual/sed.html  
+
+ sed工具  
+用法：    （选项）    （自身的脚本）  （要处理的文件）  
+     &ensp; &ensp;  sed [option]... 'script' inputfile...  
+常用选项：  
+ &ensp; &ensp;-n 不输出模式空间内容到屏幕，即不自动打印  
+ &ensp; &ensp; -e 多点编辑  
+ &ensp; &ensp;-f /PATH/SCRIPT_FILE 从指定文件中读取编辑脚本  
+ &ensp; &ensp;-r 支持使用扩展正则表达式  
+ &ensp; &ensp;-i.bak 备份文件并原处编辑  
+script:  
+    &ensp; &ensp; '地址命令'  
+
+ 地址定界：  
+ &ensp; &ensp;(1) 不给地址：对全文进行处理  
+ &ensp; &ensp;(2) 单地址：  
+ &ensp; &ensp; &ensp; &ensp;#: 指定的行，  $：最后一行  
+/pattern/：被此处模式所能够匹配到的每一行  
+ &ensp; &ensp;(3) 地址范围：  
+ &ensp; &ensp; &ensp; &ensp;#,#  
+ &ensp; &ensp; &ensp; &ensp;#,+#  
+  &ensp; &ensp;&ensp; &ensp;/pat1/,/pat2/  
+ &ensp; &ensp; &ensp; &ensp;#,/pat1/  
+ &ensp; &ensp;(4) ~：步进  
+ &ensp; &ensp; &ensp; &ensp;1~2 奇数行  
+ &ensp; &ensp; &ensp; &ensp;2~2 偶数行  
+
+ 禁用SElinux  
+ &ensp; &ensp;sed -i ^C/^SELINUX=/cSELINUX=disabled' /etc/selinux/config
+
+ sed工具  
+编辑命令：  
+   &ensp; &ensp;  d 删除模式空间匹配的行，并立即启用下一轮循环  
+    &ensp; &ensp; p 打印当前模式空间内容，追加到默认输出之后  
+    &ensp; &ensp; a [\]text 在指定行后面追加文本，支持使用\n实现多行追加  
+    &ensp; &ensp; i [\]text 在行前面插入文本  
+   &ensp; &ensp;  c [\]text 替换行为单行或多行文本  
+    &ensp; &ensp; w /path/file 保存模式匹配的行至指定文件  
+    &ensp; &ensp; r /path/file 读取指定文件的文本至模式空间中匹配到的行后  
+    &ensp; &ensp; = 为模式空间中的行打印行号  
+     &ensp; &ensp;! 模式空间中匹配行取反处理  
+
+ &ensp; &ensp; s/// 查找替换,支持使用其它分隔符，s@@@，s###  
+替换标记：  
+    &ensp; &ensp; g 行内全局替换  
+    &ensp; &ensp; p 显示替换成功的行  
+   &ensp; &ensp;  w /PATH/FILE 将替换成功的行保存至文件中  
+
+ sed示例  
+sed ‘2p’ /etc/passwd  
+sed –n ‘2p’ /etc/passwd  
+sed –n ‘1,4p’ /etc/passwd  
+sed –n ‘/root/p’ /etc/passwd  
+sed –n ‘2,/root/p’ /etc/passwd 从2行开始  
+sed -n ‘/^$/=’ file 显示空行行号  
+sed –n –e ‘/^$/p’ –e ‘/^$/=’ file  
+sed ‘/root/a\superman’ /etc/passwd行后  
+sed ‘/root/i\superman’ /etc/passwd 行前  
+sed ‘/root/c\superman’ /etc/passwd 代替行  
+  sed ‘/^$/d’ file  
+sed ‘1,10d’ file  
+nl /etc/passwd | sed ‘2,5d’  
+nl /etc/passwd | sed ‘2a tea’  
+sed 's/test/mytest/g' example  
+sed –n ‘s/root/&superman/p’ /etc/passwd 单词后  
+sed –n ‘s/root/superman&/p’ /etc/passwd 单词前  
+sed -e ‘s/dog/cat/’ -e ‘s/hi/lo/’ pets  
+sed –i.bak ‘s/dog/cat/g’ pets  
+
+ 高级编辑命令                                                                                           
+ &ensp; &ensp;P： 打印模式空间开端至\n内容，并追加到默认输出之前  
+ &ensp; &ensp;h: 把模式空间中的内容覆盖至保持空间中  
+ &ensp; &ensp;H：把模式空间中的内容追加至保持空间中  
+ &ensp; &ensp;g: 从保持空间取出数据覆盖至模式空间  
+ &ensp; &ensp;G：从保持空间取出内容追加至模式空间  
+ &ensp; &ensp;x: 把模式空间中的内容与保持空间中的内容进行互换  
+ &ensp; &ensp;n: 读取匹配到的行的下一行覆盖至模式空间  
+ &ensp; &ensp;N：读取匹配到的行的下一行追加至模式空间  
+ &ensp; &ensp;d: 删除模式空间中的行  
+ &ensp; &ensp;D：如果模式空间包含换行符，则删除直到第一个换行符的模式空间中的文本，并不会读取新的输入行，而使用合成的模式空间重新启动循环。如果模式空间
+不包含换行符，则会像发出d命令那样启动正常的新循环  
+
+ sed示例  
+ &ensp; &ensp;sed -n 'n;p' FILE  
+ &ensp; &ensp;sed '1!G;h;$!d' FILE  
+ &ensp; &ensp;sed‘N;D’FILE  
+ &ensp; &ensp;sed '$!N;$!D' FILE  
+ &ensp; &ensp;sed '$!d' FILE  
+ &ensp; &ensp;sed ‘G’ FILE  
+ &ensp; &ensp;sed ‘g’ FILE  
+ &ensp; &ensp;sed ‘/^$/d;G’ FILE  
+ &ensp; &ensp;sed 'n;d' FILE  
+ &ensp; &ensp;sed -n '1!G;h;$p' FILE   
+
+ 软件运行和编译  
+ABI：Application Binary Interface  
+    &ensp; Windows与Linux不兼容  
+            &ensp; &ensp; ELF(Executable and Linkable Format)   
+            &ensp; &ensp; PE（Portable Executable）  
+         &ensp; 库级别的虚拟化：  
+           &ensp; &ensp; &ensp; &ensp;  Linux: WINE  
+            &ensp; &ensp; &ensp;&ensp;  Windows: Cygwin  
+API：Application Programming Interface  
+      &ensp; &ensp;  POSIX：Portable OS  
+程序源代码 --> 预处理 --> 编译 --> 汇编 --> 链接  
+         &ensp; &ensp; 静态编译：.a  
+        &ensp; &ensp;  动态编译：.so  
+
+ 静态和动态链接  
+ &ensp; &ensp;链接主要作用是把各个模块之间相互引用的部分处理好，使得各个模块之间能
+够正确地衔接，分为静态链接和动态链接  
+静态链接  
+ &ensp; &ensp;  把程序对应的依赖库复制一份到包  
+  &ensp; &ensp; libxxx.a  
+  &ensp; &ensp; 嵌入程序包  
+  &ensp; &ensp; 升级难，需重新编译  
+   &ensp; &ensp;占用较多空间，迁移容易  
+动态链接  
+  &ensp; &ensp; 只把依赖加做一个动态链接  
+  &ensp; &ensp; libxxx.so  
+   &ensp; &ensp;连接指向  
+   &ensp; &ensp;占用较少空间，升级方便  
+
+ 开发语言  
+系统级开发  
+   &ensp; &ensp;  C  
+   &ensp; &ensp;  C++  
+应用级开发  
+    &ensp; &ensp; java  
+   &ensp; &ensp;  Python  
+   &ensp; &ensp;  go  
+    &ensp; &ensp; php   
+
+ 包管理器  
+二进制应用程序的组成部分：  
+      &ensp; &ensp; 二进制文件、库文件、配置文件、帮助文件  
+程序包管理器：  
+      &ensp; &ensp; debian： deb文件, dpkg包管理器  
+      &ensp; &ensp; redhat： rpm文件, rpm包管理器  
+      &ensp; &ensp; rpm： Redhat Package Manager  
+            &ensp; &ensp; &ensp; &ensp; RPM Package Manager  
